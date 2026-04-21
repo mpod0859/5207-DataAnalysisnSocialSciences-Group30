@@ -1,6 +1,6 @@
 ---
 title: "Group Project 1: Predictors of Quality of Life"
-author: "Mahek Poddar,Kashyap Adipudi, Hoimo Chowdhury  "
+author: "Mahek Poddar,Kashyap Adipudi, Hoimo Chowdhury, Pratik Kulkarni"
 subtitle: 'DATA5207: Data Analysis in the Social Sciences'
 output:
   html_document:
@@ -37,25 +37,19 @@ This assessable group project is completed over Lab 7 and Lab 8, and counts towa
 
 \newpage
 
-# YOUR TASK #1
+#TASK 1
 
 **1. What are latent variables?**
 
-Latent variables are unobserved constructs that cannot be measured directly. Instead, their existence and magnitude are inferred from patterns of covariance among a set of observable (manifest) variables. Because any single question is likely to capture only part of the construct — and will contain some measurement error — researchers use multiple indicators together to better approximate the underlying phenomenon. Common examples of latent variables in the social sciences include intelligence, personality traits, attitudes, and quality of life.
+Latent variables are constructs which can't be measured directly. Instead, their existence and magnitude can be determined through patterns of covariance from a set of observable (manifest) variables. Typically, any single question only captures a part of the construct and therefore can contain some measurement error. So researchers usually uses multiple indicators together to better approximate the underlying phenomenon. Some examples in social science are intelligence, personality traits, attitudes, and quality of life.
 
 **2. What is factor analysis?**
 
-Factor analysis is a statistical technique used to model the relationships among a set of observed variables in terms of a smaller number of unobserved common factors. The core idea is that the correlations between observed variables arise because they all reflect one or more underlying latent dimensions. The technique produces two key outputs: *factor loadings*, which express how strongly each observed variable is associated with each latent factor, and *factor scores*, which are individual-level estimates of where each respondent falls on the latent dimension. In the social sciences, factor analysis is commonly used to create composite measures of constructs like well-being, attitudes, or personality.
+Factor analysis is a statistical technique which is used to model the relationships of a set of observed variables in terms of a smaller number of unobserved common factors. The core idea is that the correlations between observed variables arise because they all reflect one or more underlying latent dimensions. This technique produces two key outputs, one is factor loading and the other one is factor scores. Factor loading express how strongly each observed variable is associated with each latent factor, and factor scores are individual-level estimates where each respondent falls on the latent dimension. In social sciences, factor analysis is used to create composite measures of constructs like well-being, attitudes, or personality.
 
 **3. What are the assumptions of factor analysis?**
 
-The main assumptions of factor analysis are:
-
-- **Adequate intercorrelations among variables**: The observed variables must be sufficiently correlated with one another for a common factor structure to exist. If all variables are independent, there is nothing for factor analysis to detect. The Kaiser-Meyer-Olkin (KMO) measure and Bartlett's test of sphericity are commonly used to assess this.
-- **Approximate multivariate normality**: Variables and their linear combinations should be approximately normally distributed, particularly when using maximum likelihood estimation.
-- **Linearity**: The relationships between observed variables and the latent factor(s) are assumed to be linear.
-- **Sufficient sample size**: A general guideline is at least 5–10 observations per variable, with a minimum total sample of around 150–200 cases.
-- **No perfect multicollinearity**: Variables must not be perfectly linearly dependent on one another, as this would make the correlation matrix singular and the analysis impossible to compute.
+Factor analysis rests on several key assumptions. First, the variables included need to actually correlate with each other to some meaningful degree — if they are all independent there is nothing for a common factor to explain. Tools like the KMO measure and Bartlett's test can be used to check this before running the analysis. Second, the relationships between observed variables and the underlying factors are assumed to be linear, so non-linear patterns won't be captured well. Third, the variables should be roughly normally distributed, particularly when using maximum likelihood estimation. Fourth, the sample needs to be large enough relative to the number of variables — a common rule of thumb is around 5–10 respondents per variable with a minimum of about 150 cases overall. Finally, the variables cannot be perfectly correlated with each other (perfect multicollinearity), because this makes the correlation matrix impossible to invert and the analysis breaks down.
 
 \newpage
 
@@ -63,7 +57,7 @@ The main assumptions of factor analysis are:
 
 We start by loading in our libraries:
 
-```{r load-libraries}
+```{r, include=FALSE, message=FALSE, warning=FALSE, load-libraries}
 library(ggplot2)
 library(psych)
 library(tidyverse)
@@ -72,8 +66,8 @@ library(ggpubr)
 
 We load the 2018 Australian World Values Survey data:
 
-```{r load-data}
-wvs.dat <- read.csv("Data/wvs_data.csv")
+```{r, include=FALSE, message=FALSE, warning=FALSE, load-data}
+wvs.dat <- read.csv("wvs_data.csv")
 ```
 
 \newpage
@@ -82,38 +76,34 @@ wvs.dat <- read.csv("Data/wvs_data.csv")
 
 Quality of life is a latent variable — we cannot directly measure it, but we can use several related survey items to construct a measure. We fit a factor analysis to five variables covering reported happiness, self-rated health, sense of freedom and control, life satisfaction, and financial satisfaction:
 
-- *Q46.* Taking all things together, would you say you are... (variable V10)
-- *Q47.* All in all, how would you describe your state of health these days? (variable V11)
-- *Q48.* How much freedom of choice and control do you feel you have over the way your life turns out? (variable V55)
-- *Q49.* All things considered, how satisfied are you with your life as a whole these days? (variable V23)
-- *Q50.* How satisfied are you with the financial situation of your household? (variable V59)
+-   *Q46.* Taking all things together, would you say you are... (variable V10)
+-   *Q47.* All in all, how would you describe your state of health these days? (variable V11)
+-   *Q48.* How much freedom of choice and control do you feel you have over the way your life turns out? (variable V55)
+-   *Q49.* All things considered, how satisfied are you with your life as a whole these days? (variable V23)
+-   *Q50.* How satisfied are you with the financial situation of your household? (variable V59)
 
 ## Standardise Variables
 
 We recode all the five variables so that the higher values indicate greater quality of life, and we remove missing values (coded as `-2` in the raw data):
 
-```{r recode-qol-vars}
+```{r, echo = FALSE, message=FALSE, warning=FALSE,  recode-qol-vars}
 
 wvs.dat <- wvs.dat %>%
   dplyr::mutate(
     
-    # V10: 1 = Very happy, 4 = Not at all happy → reverse so higher = happier
+    # V10: reverse-coded so higher = happier (original: 1 = very happy, 4 = not at all happy)
     happiness = dplyr::recode(V10,
                               '1' = 4, '2' = 3, '3' = 2, '4' = 1,
                               '-2' = NULL),
     
-    # V11: 1 = Very good, 5 = Very poor → reverse so higher = better health
+    # V11: reverse-coded so higher = better health (original: 1 = very good, 5 = very poor)
     health = dplyr::recode(V11,
                            '1' = 5, '2' = 4, '3' = 3, '4' = 2, '5' = 1,
                            '-2' = NULL),
     
-    # V59: 1–10 scale, already in positive direction; remove -2
+    # V59, V23, V55: already coded in positive direction; just remove -2
     finances = dplyr::recode(V59, '-2' = NULL, .default = V59),
-    
-    # V23: 1–10 scale, already in positive direction; remove -2
     satisfaction = dplyr::recode(V23, '-2' = NULL, .default = V23),
-    
-    # V55: 1–10 scale, already in positive direction; remove -2
     freedom = dplyr::recode(V55, '-2' = NULL, .default = V55)
     
   )
@@ -122,7 +112,7 @@ wvs.dat <- wvs.dat %>%
 
 ## Fitting the Factor Analysis
 
-```{r factor-analysis}
+```{r,echo = FALSE, message=FALSE, warning=FALSE, factor-analysis}
 
 fa.fit <- fa(wvs.dat[, c("happiness",
                           "health",
@@ -135,7 +125,7 @@ fa.fit <- fa(wvs.dat[, c("happiness",
 
 ## Saving the Factor Scores
 
-```{r grab-factor-scores}
+```{r, echo=FALSE, message=FALSE, warning=FALSE,  grab-factor-scores}
 
 wvs.dat$life.quality <- as.numeric(fa.fit$scores)
 
@@ -147,9 +137,9 @@ head(wvs.dat$life.quality, 10)
 
 # Interpreting Factor Analysis
 
-```{r factor-analysis-output, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE,  factor-analysis-output, echo=FALSE}
 
-fa.fit
+fa.fit 
 
 ```
 
@@ -159,7 +149,7 @@ The `h2` column shows the communalities — the proportion of each variable's va
 
 ## Visualising
 
-```{r fa-diagram, fig.cap = "Factor diagram showing loadings of each indicator onto the quality of life factor."}
+```{r, echo = FALSE, message=FALSE, warning=FALSE,  fa-diagram, fig.cap = "Factor diagram showing loadings of each indicator onto the quality of life factor."}
 
 fa.diagram(fa.fit)
 
@@ -169,7 +159,7 @@ fa.diagram(fa.fit)
 
 The QoL factor score is approximately standardised, with a mean of zero and a standard deviation of one. The distribution below shows this measure across the sample:
 
-```{r qol-histogram, fig.cap = "Distribution of quality of life measure produced by factor analysis.", fig.width = 5, fig.height = 4, fig.align = "center"}
+```{r, echo=FALSE, message=FALSE, warning=FALSE,  qol-histogram, fig.cap = "Distribution of quality of life measure produced by factor analysis.", fig.width = 5, fig.height = 4, fig.align = "center"}
 
 ggplot(wvs.dat, aes(life.quality)) +
   geom_histogram(fill = 'black') +
@@ -183,13 +173,13 @@ The distribution is approximately normal with a modest left skew, indicating tha
 
 # Overview of Factor Analysis Steps
 
-1. Data cleaning and recoding
-2. Running  the factor analysis
-3. Saving the factor scores
-4. Plotting the factor scores
-5. Interpreting factor analysis
-6. Analysing the association between quality of life and other variables (part of your assessable group work!)
-7. Assessing the reliability of your model (part of your assessable group work!)
+1.  Data cleaning and recoding
+2.  Running the factor analysis
+3.  Saving the factor scores
+4.  Plotting the factor scores
+5.  Interpreting factor analysis
+6.  Analysing the association between quality of life and other variables (part of your assessable group work!)
+7.  Assessing the reliability of your model (part of your assessable group work!)
 
 \newpage
 
@@ -203,7 +193,7 @@ We developed three theoretical propositions to guide our selection of predictor 
 
 **Theory 1: Social trust predicts quality of life**
 
-Social capital theory argues that trust between individuals and within communities is a foundational resource for well-being. People who trust others are more likely to engage into supportive social relationships, feel secure in their environment, and experience lower psychological stress. We expect that respondents who express greater **general interpersonal trust** (V24: "Most people can be trusted") and greater **trust in their family members** (V102) will report higher quality of life.
+According to social capital theory trust between individuals and within communities is an important resource for an individuals well-being. Generally, individuals who trust others are more likely to engage into supportive social relationships. They are seen to feel secure in their environment, and shows low signs of psychological stress. We expect that respondents who express greater **general interpersonal trust** (V24: "Most people can be trusted") and greater **trust in their family members** (V102) will report higher quality of life.
 
 *Predicted direction*: Higher trust → higher QoL.
 
@@ -219,40 +209,35 @@ Sociodemographic characteristics shape access to material resources, healthcare,
 
 *Predicted direction*: Higher education and being partnered → higher QoL.
 
----
+------------------------------------------------------------------------
 
 ### Step 2: Selecting and Examining Predictors
 
-Based on the theories above, we selected the following six predictor variables from the WVS:
+Based on the theories above, we selected six predictor variables from the WVS. These are listed in the table below along with the relevant question wording from the survey.
 
-| Variable | Code | Question wording |
+| Variable | WVS Code | Survey Question |
 |---|---|---|
-| General interpersonal trust | V24 | Q57. Generally speaking, would you say that most people can be trusted, or that you need to be very careful? |
-| Trust in family | V102 | Q58. How much do you trust people in your family? |
+| General interpersonal trust | V24 | Q57. Generally speaking, would you say that most people can be trusted, or that you need to be very careful in dealing with people? |
+| Trust in family members | V102 | Q58. How much do you trust people in your family? |
 | Importance of family | V4 | Q1. How important is family in your life? |
 | Importance of leisure time | V6 | Q3. How important is leisure time in your life? |
-| Education level | Q275 | Q275. What is your highest educational level that you have attained? |
-| Marital status | V57 | Q273. Are you currently married, living together, divorced, separated, widowed, or single? |
+| Highest education level | Q275 | Q275. What is the highest educational level that you have attained? |
+| Marital/partnership status | V57 | Q273. Are you currently married, living together as married, divorced, separated, widowed, or single? |
 
 #### Data Cleaning
 
-```{r recode-predictors}
+```{r, echo=FALSE, message=FALSE, warning=FALSE,  recode-predictors}
 
 wvs.dat <- wvs.dat %>%
   dplyr::mutate(
     
-    # --- General interpersonal trust (V24) ---
-    # Q57: 1 = "Most people can be trusted", 2 = "Need to be very careful"
-    # Recode to binary: 1 = trusting, 0 = not trusting; -2 (no answer) → NA
+    # V24: binary trust variable; 1 = trusting, 0 = cautious
     trust_general = dplyr::recode(V24,
                                   '1' = 1L,
                                   '2' = 0L,
                                   '-2' = NULL),
     
-    # --- Trust in family (V102) ---
-    # Q58: 1 = Trust completely, 2 = Trust somewhat,
-    #      3 = Do not trust very much, 4 = Do not trust at all; -2 → NA
-    # Reverse-coded so higher = more trust
+    # V102: reverse-coded so higher = more trust in family
     trust_family = dplyr::recode(V102,
                                  '1' = 4L,
                                  '2' = 3L,
@@ -260,10 +245,7 @@ wvs.dat <- wvs.dat %>%
                                  '4' = 1L,
                                  '-2' = NULL),
     
-    # --- Importance of family (V4) ---
-    # Q1: 1 = Very important, 2 = Rather important,
-    #     3 = Not very important, 4 = Not at all important; -2 → NA
-    # Reverse-coded so higher = more important
+    # V4: reverse-coded so higher = family more important
     imp_family = dplyr::recode(V4,
                                '1' = 4L,
                                '2' = 3L,
@@ -271,10 +253,7 @@ wvs.dat <- wvs.dat %>%
                                '4' = 1L,
                                '-2' = NULL),
     
-    # --- Importance of leisure time (V6) ---
-    # Q3: 1 = Very important, 2 = Rather important,
-    #     3 = Not very important, 4 = Not at all important; -2 → NA
-    # Reverse-coded so higher = more important
+    # V6: reverse-coded so higher = leisure more important
     imp_leisure = dplyr::recode(V6,
                                 '1' = 4L,
                                 '2' = 3L,
@@ -282,22 +261,12 @@ wvs.dat <- wvs.dat %>%
                                 '4' = 1L,
                                 '-2' = NULL),
     
-    # --- Education level (Q275) ---
-    # Q275: 1 = No formal education, 2 = Primary, 3 = Lower secondary (Yr 9 or less),
-    #       4 = Upper secondary (Yr 10-12), 5 = Post-secondary non-tertiary,
-    #       7 = Bachelor, 8 = Master, 9 = Doctoral; -2 → NA
-    # Note: category 6 does not appear in the Australian data.
-    # Treated as ordinal; no reverse-coding needed (higher = more education).
+    # Q275: ordinal education variable; higher = more education; -2 removed
     education = dplyr::recode(Q275,
                               '-2' = NULL,
                               .default = Q275),
     
-    # --- Marital status (V57), recoded to binary ---
-    # Q273: 1 = Married, 2 = Living together as married, 3 = Divorced,
-    #       4 = Separated, 5 = Widowed, 6 = Single; -2 → NA
-    # Recode: 1 = partnered (married or cohabiting), 0 = not partnered
-    # Theoretical rationale: we are interested in the presence vs. absence
-    # of a close intimate partnership, not the specific non-partner category.
+    # V57: binary; 1 = partnered (married or cohabiting), 0 = not partnered
     partnered = dplyr::case_when(
       V57 %in% c(1, 2)       ~ 1L,
       V57 %in% c(3, 4, 5, 6) ~ 0L,
@@ -310,7 +279,7 @@ wvs.dat <- wvs.dat %>%
 
 #### Summary Statistics
 
-```{r summary-stats}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, summary-stats}
 
 wvs.dat %>%
   dplyr::select(trust_general, trust_family, imp_family,
@@ -327,7 +296,7 @@ The summary statistics reveal several features worth noting. Trust in family (me
 
 **General interpersonal trust (V24)**
 
-```{r plot-trust-general, fig.cap = "Distribution of general interpersonal trust (V24).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-trust-general, fig.cap = "Distribution of general interpersonal trust (V24).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(trust_general)) %>%
@@ -346,7 +315,7 @@ About 54% of respondents express general trust in most people. This is a binary 
 
 **Trust in family (V102)**
 
-```{r plot-trust-family, fig.cap = "Distribution of trust in family members (V102, recoded: higher = more trust).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-trust-family, fig.cap = "Distribution of trust in family members (V102, recoded: higher = more trust).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(trust_family)) %>%
@@ -369,7 +338,7 @@ The vast majority of respondents trust their family completely or somewhat (78% 
 
 **Importance of family (V4)**
 
-```{r plot-imp-family, fig.cap = "Distribution of importance of family (V4, recoded: higher = more important).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-imp-family, fig.cap = "Distribution of importance of family (V4, recoded: higher = more important).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(imp_family)) %>%
@@ -392,7 +361,7 @@ Over 90% of respondents rate family as "very important", producing a strong ceil
 
 **Importance of leisure time (V6)**
 
-```{r plot-imp-leisure, fig.cap = "Distribution of importance of leisure time (V6, recoded: higher = more important).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-imp-leisure, fig.cap = "Distribution of importance of leisure time (V6, recoded: higher = more important).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(imp_leisure)) %>%
@@ -415,7 +384,7 @@ Leisure time is also rated highly, but with somewhat more variance than family i
 
 **Education level (Q275)**
 
-```{r plot-education, fig.cap = "Distribution of education level (Q275).", fig.width = 6, fig.height = 4, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-education, fig.cap = "Distribution of education level (Q275).", fig.width = 6, fig.height = 4, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(education)) %>%
@@ -442,7 +411,7 @@ Education is spread across all categories, with the largest groups at post-secon
 
 **Marital / partnership status (V57)**
 
-```{r plot-partnered, fig.cap = "Distribution of partnership status (V57, recoded to binary).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
+```{r, echo = FALSE, message=FALSE, warning=FALSE, plot-partnered, fig.cap = "Distribution of partnership status (V57, recoded to binary).", fig.width = 5, fig.height = 3.5, fig.align = "center"}
 
 wvs.dat %>%
   filter(!is.na(partnered)) %>%
@@ -459,15 +428,15 @@ wvs.dat %>%
 
 Around 64% of respondents are currently partnered. We recoded the original six-category variable (married, living together, divorced, separated, widowed, single) to a binary indicator, because our theoretical interest is in whether an individual has an intimate partner, not in the specific type of non-partnership situation.
 
----
+------------------------------------------------------------------------
 
 ### Step 3: Written Sections
 
 #### Introduction
 
-This report investigates the predictors of quality of life among Australian adults using data from the 2018 World Values Survey. Quality of life is a widely studied but inherently complex construct, encompassing not just material circumstances but psychological, social, and physical dimensions of well-being. Because it is a latent variable, it cannot be measured directly; instead, we construct a composite measure using factor analysis of five well-being indicators from the survey. We then draw on established theory in social science to develop and test a set of hypotheses about what predicts higher and lower quality of life in the Australian population.
+This report investigates the predictors of quality of life among Australian adults using data from the 2018 World Values Survey.. Quality of life is an important but complex concept that includes material circumstances and also the psychology, social relationships and physical aspects of a person's well-being. Since quality of life is a latent variable, it cannot be directly measured but must be measured as a composite of five well-being measures through factor analysis. We then use established social science theories to create and test hypotheses regarding variables predicting high and low quality of life in Australia.
 
-Understanding what drives quality of life has significant implications for social policy: if we can identify the personal characteristics and social conditions most strongly associated with well-being, this can guide interventions targeted at improving life outcomes. The WVS offers a uniquely comprehensive dataset for this purpose, covering attitudes, values, social relationships, and demographics from a nationally representative sample of 1,813 Australian adults.
+The knowledge of the factors that affect the quality of life has important repercussions for social policy. Specifically, by identifying which individual characteristics and social conditions are associated with positive well-being, interventions can then be developed based on these characteristics and the conditions to change people's lives for the better. The WVS provides a unique, well-rounded dataset, that contains information regarding user's attitudes, values, social connections, and demographic data collected from 1,813 nationally representative Australian adults.
 
 #### Theory
 
@@ -481,12 +450,11 @@ We develop three theoretical accounts of what might predict quality of life.
 
 #### Data and Methods
 
-The data used in this project come from the 2018 Australian World Values Survey (n = 1,813), obtained from the Australian Data Archive. Respondents were adults aged 18 and over, drawn from all Australian states and territories.
+This project uses the 2018 Australian World Values Survey, which covers 1,813 adults aged 18 and over recruited from across all Australian states and territories. The data were accessed through the Australian Data Archive. The WVS asks respondents about a wide range of topics including their values, social relationships, health, and well-being, which makes it a good fit for this kind of analysis.
 
-The dependent variable — quality of life — was constructed using factor analysis (minimum residual method, one factor) applied to five survey items: happiness (V10), self-rated health (V11), sense of freedom and control over one's life (V55), overall life satisfaction (V23), and financial satisfaction (V59). All five items were reverse-coded where necessary so that higher values indicate greater well-being, and missing values (coded as `-2` in the raw data) were set to `NA` before analysis. The resulting factor score is approximately standardised (mean = 0, SD ≈ 1), with higher scores indicating higher quality of life.
+To measure quality of life — our dependent variable — we used factor analysis on five survey items: happiness (V10), self-rated health (V11), sense of freedom and control over life (V55), overall life satisfaction (V23), and financial satisfaction (V59). Before running the factor analysis, we reverse-coded happiness and health so that a higher value always means better well-being, and we set the missing value code (`-2`) to `NA` across all five items. We specified a single-factor solution using the minimum residual method in the `psych` package. The resulting factor scores are approximately standardised, with a mean of zero and a standard deviation close to one — higher scores mean higher quality of life.
 
-Six independent variables were selected based on the theoretical framework above. General interpersonal trust (V24) was recoded to a binary variable (1 = most people can be trusted; 0 = need to be very careful). Trust in family (V102), importance of family (V4), and importance of leisure time (V6) were each reverse-coded on their original four-point scales so that higher values indicate more of the construct. Education (Q275) was retained as an ordinal variable ranging from 1 (no formal education) to 9 (doctoral degree), with missing values removed. Marital status (V57) was recoded to a binary variable indicating whether the respondent is currently partnered (married or living together = 1) or not (divorced, separated, widowed, or single = 0). In all cases, missing values were set to `NA`. Regression analysis relating these predictors to the quality of life factor score will be conducted in Lab 8.
+For our predictors, we made a few recoding decisions. General interpersonal trust (V24) was turned into a binary variable: respondents who said most people can be trusted were coded 1, and those who said you need to be careful were coded 0. Trust in family (V102), importance of family (V4), and importance of leisure time (V6) were each reverse-coded from their original scales so that higher values always mean more of the construct (e.g., more trust, more importance). Education (Q275) was kept as an ordinal variable running from 1 (no formal education) to 9 (doctoral degree) — note that category 6 does not appear in the Australian wave of the WVS, which is a feature of the international ISCED classification. Finally, marital status (V57) was simplified into a binary: 1 if the respondent is currently married or living with a partner, 0 otherwise. We made this choice because our theoretical interest is in whether someone has a close intimate partner, not in distinguishing among the different non-partnered situations. All remaining missing values were set to `NA`. In Lab 8, we will use linear regression to examine how these six predictors relate to the quality of life factor score.
 
 \newpage
 
-*Make sure to save this file before closing RStudio. Submit the .Rmd in a zipped folder with the Data/ directory.*
